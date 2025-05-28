@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Woord van de Dag</string>
+    <string name="word_of_the_day">Woord van de Dag</string>
+    <string name="previous_words">Eerdere Woorden</string>
+    <string name="notification_channel_name">Dagelijks Woord</string>
+    <string name="notification_channel_description">Dagelijkse meldingen voor nieuwe Nederlandse woorden</string>
+    <string name="notification_title">Nieuw Woord van de Dag</string>
+</resources> 
