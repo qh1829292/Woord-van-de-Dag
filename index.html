@@ -26,8 +26,8 @@
     align-items: center;
     margin-bottom: 1.5rem;
   }
-  .logo { font-size: 1rem; font-weight: 600; color: #185FA5; }
-  .logo span { font-weight: 400; color: #555; }
+  .logo { font-size: 1rem; font-weight: 600; color: #185FA5; display: flex; flex-direction: column; gap: 2px; }
+  .logo span { font-weight: 400; color: #555; font-size: 0.8rem; }
   .logo a { color: #555; text-decoration: underline; }
   .notify-btn {
     font-size: 0.8rem;
@@ -190,7 +190,7 @@
 <body>
 
 <header>
-  <div class="logo">SlimmerWoorden <span>| door <a href="https://qhaneveld.nl" target="_blank" rel="noopener">Quint Haneveld</a> | Scriptiebegeleider</span></div>
+  <div class="logo">SlimmerWoorden <span>door <a href="https://qhaneveld.nl" target="_blank" rel="noopener">Quint Haneveld</a> | Taalliefhebber</span></div>
   <button class="notify-btn" id="notifyBtn" onclick="requestNotify()">🔔 Meldingen</button>
 </header>
 
@@ -215,16 +215,15 @@
     <div class="definition" id="wordDefinition"></div>
     <div class="section-label">Voorbeeldzin</div>
     <div class="example" id="wordExample"></div>
-    <a class="vandale-link" id="vanDaleLink" target="_blank" rel="noopener">→ Bekijk in Van Dale online</a>
+    <a class="vandale-link" id="vanDaleLink" target="_blank" rel="noopener">→ Bekijk in woordenboek</a>
     <div class="actions">
-      <button class="btn-primary" id="newWordBtn" onclick="loadWord(true)">Nieuw woord ↻</button>
-      <button class="btn-secondary" onclick="shareWord()">Delen</button>
+      <button class="btn-secondary" onclick="shareWord()" style="flex:1;">Delen</button>
     </div>
   </div>
   <div class="error-msg" id="errorState" style="display:none;"></div>
 </div>
 
-<p class="ai-note">Definities en voorbeeldzinnen zijn gegenereerd met AI (Claude van Anthropic). Altijd goed om ook de officiële Van Dale te raadplegen.</p>
+<p class="ai-note">Definities en voorbeeldzinnen zijn gegenereerd met AI (Claude van Anthropic). Altijd goed om ook een officieel woordenboek te raadplegen.</p>
 
 <script>
 const STORAGE_KEY = 'wvdd_data';
@@ -246,8 +245,6 @@ async function loadWord(force = false) {
   }
 
   showLoading();
-  const btn = document.getElementById('newWordBtn');
-  if (btn) btn.disabled = true;
 
   try {
     const resp = await fetch('/.netlify/functions/word', {
@@ -264,8 +261,6 @@ async function loadWord(force = false) {
     renderWord(entry);
   } catch (e) {
     showError('Fout bij laden: ' + e.message);
-  } finally {
-    if (btn) btn.disabled = false;
   }
 }
 
@@ -278,8 +273,8 @@ function renderWord(entry) {
   document.getElementById('phoneticText').textContent = entry.phonetic;
   document.getElementById('wordDefinition').textContent = entry.definition;
   document.getElementById('wordExample').textContent = entry.example;
-  document.getElementById('vanDaleLink').href = 'https://www.vandale.nl/gratis-woordenboek/nederlands/betekenis/' + encodeURIComponent(entry.word.toLowerCase());
-  document.getElementById('vanDaleLink').textContent = '→ Bekijk "' + entry.word + '" in Van Dale online';
+  document.getElementById('vanDaleLink').href = 'https://www.woorden.org/woord/' + encodeURIComponent(entry.word.toLowerCase());
+  document.getElementById('vanDaleLink').textContent = '→ Bekijk "' + entry.word + '" op Woorden.org';
 
   document.getElementById('loadingState').style.display = 'none';
   document.getElementById('errorState').style.display = 'none';
