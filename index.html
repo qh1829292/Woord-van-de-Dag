@@ -1,43 +1,167 @@
-const { getStore } = require('@netlify/blobs');
-
-exports.handler = async (event) => {
-  const store = getStore('push-tokens');
-
-  if (event.httpMethod === 'DELETE') {
-    try {
-      const { token } = JSON.parse(event.body);
-      if (!token) {
-        return { statusCode: 400, body: JSON.stringify({ error: 'Geen token meegegeven' }) };
-      }
-      await store.delete(token);
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ success: true })
-      };
-    } catch (e) {
-      return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
-    }
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#185FA5">
+<meta name="description" content="Elke dag een Nederlands woord op B1–C1 niveau. Word slimmer met SlimmerWoorden.nl">
+<title>SlimmerWoorden.nl</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 1rem 3rem;
+    color: #1a202c;
   }
-
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method not allowed' };
+  header {
+    width: 100%;
+    max-width: 520px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
   }
-
-  try {
-    const { token } = JSON.parse(event.body);
-    if (!token) {
-      return { statusCode: 400, body: JSON.stringify({ error: 'Geen token meegegeven' }) };
-    }
-
-    await store.set(token, JSON.stringify({ token, savedAt: new Date().toISOString() }));
-
-    return {
-      statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ success: true })
-    };
-  } catch (e) {
-    return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
+  .logo { font-size: 1rem; font-weight: 600; color: #185FA5; display: flex; flex-direction: column; gap: 2px; }
+  .logo span { font-weight: 400; color: #555; font-size: 0.8rem; }
+  .logo a { color: #555; text-decoration: underline; }
+  .notify-btn {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1.5px solid #185FA5;
+    background: white;
+    color: #185FA5;
+    cursor: pointer;
+    font-weight: 500;
   }
-};
+  .notify-btn:hover { background: #e6f1fb; }
+  .card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    width: 100%;
+    max-width: 520px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+  .date-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #888;
+    margin-bottom: 0.5rem;
+  }
+  .word-header {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+  }
+  .word {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #185FA5;
+    line-height: 1.1;
+  }
+  .word-type {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #185FA5;
+    background: #e6f1fb;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+  }
+  .level-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #3B6D11;
+    background: #eaf3de;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .phonetic {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .audio-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #185FA5;
+    font-size: 1.1rem;
+    padding: 2px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+  }
+  .audio-btn:hover { color: #0c447c; }
+  .divider { border: none; border-top: 1px solid #e8edf2; margin: 1.25rem 0; }
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #999;
+    margin-bottom: 0.4rem;
+  }
+  .definition {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #2d3748;
+    margin-bottom: 1.25rem;
+  }
+  .example {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #4a5568;
+    font-style: italic;
+    background: #f7faff;
+    border-left: 3px solid #85B7EB;
+    padding: 0.6rem 0.9rem;
+    border-radius: 0 8px 8px 0;
+    margin-bottom: 1.25rem;
+  }
+  .vandale-link {
+    font-size: 0.8rem;
+    color: #185FA5;
+    text-decoration: none;
+  }
+  .vandale-link:hover { text-decoration: underline; }
+  .actions {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .btn-primary {
+    flex: 1;
+    padding: 0.7rem 1rem;
+    background: #185FA5;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: #0c447c; }
+  .btn-primary:disabled { background: #aac4e0; cursor: default; }
+  .btn-secondary {
+    padding: 0.7rem 1rem;
+    background: white;
+    color: #185FA5;
+    border: 1.5px solid #185FA5;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight:
