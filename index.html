@@ -1,353 +1,43 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#185FA5">
-<meta name="description" content="Elke dag een Nederlands woord op B1–C1 niveau. Word slimmer met SlimmerWoorden.nl">
-<title>SlimmerWoorden.nl</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f0f4f8;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1.5rem 1rem 3rem;
-    color: #1a202c;
-  }
-  header {
-    width: 100%;
-    max-width: 520px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-  }
-  .logo { font-size: 1rem; font-weight: 600; color: #185FA5; display: flex; flex-direction: column; gap: 2px; }
-  .logo span { font-weight: 400; color: #555; font-size: 0.8rem; }
-  .logo a { color: #555; text-decoration: underline; }
-  .notify-btn {
-    font-size: 0.8rem;
-    padding: 6px 12px;
-    border-radius: 20px;
-    border: 1.5px solid #185FA5;
-    background: white;
-    color: #185FA5;
-    cursor: pointer;
-    font-weight: 500;
-  }
-  .notify-btn:hover { background: #e6f1fb; }
-  .card {
-    background: white;
-    border-radius: 20px;
-    padding: 2rem 1.75rem;
-    width: 100%;
-    max-width: 520px;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  }
-  .date-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #888;
-    margin-bottom: 0.5rem;
-  }
-  .word-header {
-    display: flex;
-    align-items: baseline;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.25rem;
-  }
-  .word {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #185FA5;
-    line-height: 1.1;
-  }
-  .word-type {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: #185FA5;
-    background: #e6f1fb;
-    padding: 3px 10px;
-    border-radius: 20px;
-    white-space: nowrap;
-  }
-  .level-badge {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #3B6D11;
-    background: #eaf3de;
-    padding: 3px 10px;
-    border-radius: 20px;
-  }
-  .phonetic {
-    font-size: 1rem;
-    color: #555;
-    margin-bottom: 1.25rem;
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-  .audio-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #185FA5;
-    font-size: 1.1rem;
-    padding: 2px;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-  }
-  .audio-btn:hover { color: #0c447c; }
-  .divider { border: none; border-top: 1px solid #e8edf2; margin: 1.25rem 0; }
-  .section-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: #999;
-    margin-bottom: 0.4rem;
-  }
-  .definition {
-    font-size: 1.05rem;
-    line-height: 1.6;
-    color: #2d3748;
-    margin-bottom: 1.25rem;
-  }
-  .example {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #4a5568;
-    font-style: italic;
-    background: #f7faff;
-    border-left: 3px solid #85B7EB;
-    padding: 0.6rem 0.9rem;
-    border-radius: 0 8px 8px 0;
-    margin-bottom: 1.25rem;
-  }
-  .vandale-link {
-    font-size: 0.8rem;
-    color: #185FA5;
-    text-decoration: none;
-  }
-  .vandale-link:hover { text-decoration: underline; }
-  .actions {
-    display: flex;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-  }
-  .btn-primary {
-    flex: 1;
-    padding: 0.7rem 1rem;
-    background: #185FA5;
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-  }
-  .btn-primary:hover { background: #0c447c; }
-  .btn-primary:disabled { background: #aac4e0; cursor: default; }
-  .btn-secondary {
-    padding: 0.7rem 1rem;
-    background: white;
-    color: #185FA5;
-    border: 1.5px solid #185FA5;
-    border-radius: 12px;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-  }
-  .btn-secondary:hover { background: #e6f1fb; }
-  .ai-note {
-    width: 100%;
-    max-width: 520px;
-    margin-top: 1rem;
-    font-size: 0.75rem;
-    color: #aaa;
-    text-align: center;
-  }
-  .loading { text-align: center; padding: 2rem 0; color: #888; }
-  .spinner {
-    width: 32px; height: 32px;
-    border: 3px solid #e6f1fb;
-    border-top-color: #185FA5;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 1rem;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .error-msg { color: #A32D2D; font-size: 0.9rem; text-align: center; padding: 1rem 0; }
-</style>
-</head>
-<body>
+const { getStore } = require('@netlify/blobs');
 
-<header>
-  <div class="logo">SlimmerWoorden <span>door <a href="https://qhaneveld.nl" target="_blank" rel="noopener">Quint Haneveld</a> | Taalliefhebber</span></div>
-  <button class="notify-btn" id="notifyBtn" onclick="requestNotify()">🔔 Meldingen</button>
-</header>
+exports.handler = async (event) => {
+  const store = getStore('push-tokens');
 
-<div class="card" id="wordCard">
-  <div class="loading" id="loadingState">
-    <div class="spinner"></div>
-    <p>Woord wordt geladen…</p>
-  </div>
-  <div id="wordContent" style="display:none;">
-    <div class="date-label" id="dateLabel"></div>
-    <div class="word-header">
-      <div class="word" id="wordText"></div>
-      <span class="word-type" id="wordType"></span>
-      <span class="level-badge" id="wordLevel"></span>
-    </div>
-    <div class="phonetic">
-      <span id="phoneticText"></span>
-      <button class="audio-btn" onclick="speakWord()" title="Uitspreken" aria-label="Uitspreken">🔊</button>
-    </div>
-    <hr class="divider">
-    <div class="section-label">Definitie</div>
-    <div class="definition" id="wordDefinition"></div>
-    <div class="section-label">Voorbeeldzin</div>
-    <div class="example" id="wordExample"></div>
-    <a class="vandale-link" id="vanDaleLink" target="_blank" rel="noopener">→ Bekijk in woordenboek</a>
-    <div class="actions">
-      <button class="btn-secondary" onclick="shareWord()" style="flex:1;">Delen</button>
-    </div>
-  </div>
-  <div class="error-msg" id="errorState" style="display:none;"></div>
-</div>
-
-<p class="ai-note">Definities en voorbeeldzinnen zijn gegenereerd met AI (Claude van Anthropic). Altijd goed om ook een officieel woordenboek te raadplegen.</p>
-
-<script>
-const STORAGE_KEY = 'wvdd_data';
-let currentWord = '';
-
-function getDateStr() {
-  return new Date().toISOString().slice(0, 10);
-}
-
-function formatDate() {
-  return new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-async function loadWord(force = false) {
-  const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  if (!force && cached.date === getDateStr() && cached.word) {
-    renderWord(cached);
-    return;
+  if (event.httpMethod === 'DELETE') {
+    try {
+      const { token } = JSON.parse(event.body);
+      if (!token) {
+        return { statusCode: 400, body: JSON.stringify({ error: 'Geen token meegegeven' }) };
+      }
+      await store.delete(token);
+      return {
+        statusCode: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ success: true })
+      };
+    } catch (e) {
+      return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
+    }
   }
 
-  showLoading();
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: 'Method not allowed' };
+  }
 
   try {
-    const resp = await fetch('/.netlify/functions/word', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force })
-    });
-
-    if (!resp.ok) throw new Error('Server gaf een foutmelding (' + resp.status + ')');
-    const entry = await resp.json();
-    if (entry.error) throw new Error(entry.error);
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
-    renderWord(entry);
-  } catch (e) {
-    showError('Fout bij laden: ' + e.message);
-  }
-}
-
-function renderWord(entry) {
-  currentWord = entry.word;
-  document.getElementById('dateLabel').textContent = formatDate();
-  document.getElementById('wordText').textContent = entry.word;
-  document.getElementById('wordType').textContent = entry.type;
-  document.getElementById('wordLevel').textContent = entry.level;
-  document.getElementById('phoneticText').textContent = entry.phonetic;
-  document.getElementById('wordDefinition').textContent = entry.definition;
-  document.getElementById('wordExample').textContent = entry.example;
-  document.getElementById('vanDaleLink').href = 'https://www.woorden.org/woord/' + encodeURIComponent(entry.word.toLowerCase());
-  document.getElementById('vanDaleLink').textContent = '→ Bekijk "' + entry.word + '" op Woorden.org';
-
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('errorState').style.display = 'none';
-  document.getElementById('wordContent').style.display = 'block';
-}
-
-function showLoading() {
-  document.getElementById('loadingState').style.display = 'block';
-  document.getElementById('wordContent').style.display = 'none';
-  document.getElementById('errorState').style.display = 'none';
-}
-
-function showError(msg) {
-  document.getElementById('loadingState').style.display = 'none';
-  document.getElementById('wordContent').style.display = 'none';
-  document.getElementById('errorState').style.display = 'block';
-  document.getElementById('errorState').textContent = msg;
-}
-
-function speakWord() {
-  if (!currentWord) return;
-  const u = new SpeechSynthesisUtterance(currentWord);
-  u.lang = 'nl-NL';
-  u.rate = 0.85;
-  speechSynthesis.speak(u);
-}
-
-function shareWord() {
-  if (navigator.share && currentWord) {
-    navigator.share({ title: 'SlimmerWoorden.nl', text: 'Vandaag leerde ik: ' + currentWord, url: window.location.href });
-  } else {
-    navigator.clipboard?.writeText(window.location.href);
-    alert('Link gekopieerd!');
-  }
-}
-
-async function requestNotify() {
-  if (!('Notification' in window)) { alert('Meldingen worden niet ondersteund in deze browser.'); return; }
-  const perm = await Notification.requestPermission();
-  if (perm === 'granted') {
-    document.getElementById('notifyBtn').textContent = '✓ Meldingen aan';
-    document.getElementById('notifyBtn').style.background = '#eaf3de';
-    document.getElementById('notifyBtn').style.color = '#3B6D11';
-    document.getElementById('notifyBtn').style.borderColor = '#3B6D11';
-    scheduleDailyCheck();
-    alert('Meldingen ingeschakeld! Je ontvangt elke dag om 08:00 het woord van de dag.');
-  }
-}
-
-function scheduleDailyCheck() {
-  const now = new Date();
-  const next8 = new Date(now);
-  next8.setHours(8, 0, 0, 0);
-  if (next8 <= now) next8.setDate(next8.getDate() + 1);
-  const ms = next8 - now;
-  setTimeout(() => {
-    if (Notification.permission === 'granted') {
-      new Notification('SlimmerWoorden.nl 📖', {
-        body: 'Open SlimmerWoorden.nl voor het woord van vandaag!',
-        icon: '/icon-192.png'
-      });
+    const { token } = JSON.parse(event.body);
+    if (!token) {
+      return { statusCode: 400, body: JSON.stringify({ error: 'Geen token meegegeven' }) };
     }
-    scheduleDailyCheck();
-  }, ms);
-}
 
-window.addEventListener('load', () => {
-  if (Notification.permission === 'granted') {
-    document.getElementById('notifyBtn').textContent = '✓ Meldingen aan';
-    scheduleDailyCheck();
+    await store.set(token, JSON.stringify({ token, savedAt: new Date().toISOString() }));
+
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ success: true })
+    };
+  } catch (e) {
+    return { statusCode: 500, body: JSON.stringify({ error: e.message }) };
   }
-  loadWord();
-});
-</script>
-</body>
-</html>
+};
