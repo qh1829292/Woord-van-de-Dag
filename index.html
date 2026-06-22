@@ -164,4 +164,241 @@
     border: 1.5px solid #185FA5;
     border-radius: 12px;
     font-size: 0.95rem;
-    font-weight:
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .btn-secondary:hover { background: #e6f1fb; }
+  .ai-note {
+    width: 100%;
+    max-width: 520px;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: #aaa;
+    text-align: center;
+  }
+  .loading { text-align: center; padding: 2rem 0; color: #888; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid #e6f1fb;
+    border-top-color: #185FA5;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error-msg { color: #A32D2D; font-size: 0.9rem; text-align: center; padding: 1rem 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SlimmerWoorden <span>door <a href="https://qhaneveld.nl" target="_blank" rel="noopener">Quint Haneveld</a> | Taalliefhebber</span></div>
+  <button class="notify-btn" id="notifyBtn" onclick="requestNotify()">🔔 Meldingen</button>
+</header>
+
+<div class="card" id="wordCard">
+  <div class="loading" id="loadingState">
+    <div class="spinner"></div>
+    <p>Woord wordt geladen…</p>
+  </div>
+  <div id="wordContent" style="display:none;">
+    <div class="date-label" id="dateLabel"></div>
+    <div class="word-header">
+      <div class="word" id="wordText"></div>
+      <span class="word-type" id="wordType"></span>
+      <span class="level-badge" id="wordLevel"></span>
+    </div>
+    <div class="phonetic">
+      <span id="phoneticText"></span>
+      <button class="audio-btn" onclick="speakWord()" title="Uitspreken" aria-label="Uitspreken">🔊</button>
+    </div>
+    <hr class="divider">
+    <div class="section-label">Definitie</div>
+    <div class="definition" id="wordDefinition"></div>
+    <div class="section-label">Voorbeeldzin</div>
+    <div class="example" id="wordExample"></div>
+    <a class="vandale-link" id="vanDaleLink" target="_blank" rel="noopener">→ Bekijk in woordenboek</a>
+    <div class="actions">
+      <button class="btn-secondary" onclick="shareWord()" style="flex:1;">Delen</button>
+    </div>
+  </div>
+  <div class="error-msg" id="errorState" style="display:none;"></div>
+</div>
+
+<p class="ai-note">Definities en voorbeeldzinnen zijn gegenereerd met AI (Claude van Anthropic). Altijd goed om ook een officieel woordenboek te raadplegen.</p>
+
+<script>
+const STORAGE_KEY = 'wvdd_data';
+let currentWord = '';
+
+(function() {
+  const stored = localStorage.getItem('notify_enabled');
+  document.addEventListener('DOMContentLoaded', () => {
+    setNotifyButtonState(stored === 'true');
+  });
+})();
+
+function getDateStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+async function loadWord(force = false) {
+  const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+  if (!force && cached.date === getDateStr() && cached.word) {
+    renderWord(cached);
+    return;
+  }
+
+  showLoading();
+
+  try {
+    const resp = await fetch('/.netlify/functions/word', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force })
+    });
+
+    if (!resp.ok) throw new Error('Server gaf een foutmelding (' + resp.status + ')');
+    const entry = await resp.json();
+    if (entry.error) throw new Error(entry.error);
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
+    renderWord(entry);
+  } catch (e) {
+    showError('Fout bij laden: ' + e.message);
+  }
+}
+
+function renderWord(entry) {
+  currentWord = entry.word;
+  document.getElementById('dateLabel').textContent = formatDate();
+  document.getElementById('wordText').textContent = entry.word;
+  document.getElementById('wordType').textContent = entry.type;
+  document.getElementById('wordLevel').textContent = entry.level;
+  document.getElementById('phoneticText').textContent = entry.phonetic;
+  document.getElementById('wordDefinition').textContent = entry.definition;
+  document.getElementById('wordExample').textContent = entry.example;
+  document.getElementById('vanDaleLink').href = 'https://www.woorden.org/woord/' + encodeURIComponent(entry.word.toLowerCase());
+  document.getElementById('vanDaleLink').textContent = '→ Bekijk "' + entry.word + '" op Woorden.org';
+
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('errorState').style.display = 'none';
+  document.getElementById('wordContent').style.display = 'block';
+}
+
+function showLoading() {
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('wordContent').style.display = 'none';
+  document.getElementById('errorState').style.display = 'none';
+}
+
+function showError(msg) {
+  document.getElementById('loadingState').style.display = 'none';
+  document.getElementById('wordContent').style.display = 'none';
+  document.getElementById('errorState').style.display = 'block';
+  document.getElementById('errorState').textContent = msg;
+}
+
+function speakWord() {
+  if (!currentWord) return;
+  const u = new SpeechSynthesisUtterance(currentWord);
+  u.lang = 'nl-NL';
+  u.rate = 0.85;
+  speechSynthesis.speak(u);
+}
+
+function shareWord() {
+  if (navigator.share && currentWord) {
+    navigator.share({ title: 'SlimmerWoorden.nl', text: 'Vandaag leerde ik: ' + currentWord, url: window.location.href });
+  } else {
+    navigator.clipboard?.writeText(window.location.href);
+    alert('Link gekopieerd!');
+  }
+}
+
+async function requestNotify() {
+  const isEnabled = localStorage.getItem('notify_enabled') === 'true';
+
+  if (isEnabled) {
+    const savedToken = localStorage.getItem('notify_token');
+    if (savedToken) {
+      try {
+        await fetch('/.netlify/functions/save-token', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: savedToken })
+        });
+      } catch (e) { /* stil falen, lokaal toch uitzetten */ }
+    }
+    localStorage.removeItem('notify_enabled');
+    localStorage.removeItem('notify_token');
+    setNotifyButtonState(false);
+    return;
+  }
+
+  if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+    alert('Meldingen worden niet ondersteund in deze browser.');
+    return;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') return;
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBfbY9YNKfghT784cNi5oHVJpJ005hYlSY",
+      authDomain: "slimmerwoorden.firebaseapp.com",
+      projectId: "slimmerwoorden",
+      storageBucket: "slimmerwoorden.firebasestorage.app",
+      messagingSenderId: "837901820354",
+      appId: "1:837901820354:web:827f31e4cb4b172a91765b"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    const token = await messaging.getToken({
+      vapidKey: '99R06W9qJRTX5_EFO3emvKSxatseEdl6DbAEwsgzLRc',
+      serviceWorkerRegistration: registration
+    });
+
+    if (token) {
+      await fetch('/.netlify/functions/save-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+      localStorage.setItem('notify_enabled', 'true');
+      localStorage.setItem('notify_token', token);
+      setNotifyButtonState(true);
+      alert('Meldingen ingeschakeld! Je ontvangt elke dag om 07:00 het woord van de dag.');
+    }
+  } catch (e) {
+    alert('Kon meldingen niet inschakelen: ' + e.message);
+  }
+}
+
+function setNotifyButtonState(enabled) {
+  const btn = document.getElementById('notifyBtn');
+  if (enabled) {
+    btn.textContent = '✓ Meldingen aan';
+    btn.style.background = '#eaf3de';
+    btn.style.color = '#3B6D11';
+    btn.style.borderColor = '#3B6D11';
+  } else {
+    btn.textContent = '🔔 Meldingen';
+    btn.style.background = 'white';
+    btn.style.color = '#185FA5';
+    btn.style.borderColor = '#185FA5';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  loadWord();
+});
+</script>
+</body>
+</html>
