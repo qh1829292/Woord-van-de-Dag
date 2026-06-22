@@ -29,8 +29,9 @@
     margin-bottom: 1.5rem;
   }
   .logo { font-size: 1rem; font-weight: 600; color: #185FA5; display: flex; flex-direction: column; gap: 2px; }
-  .logo span { font-weight: 400; color: #555; font-size: 0.8rem; }
-  .logo a { color: #555; text-decoration: underline; }
+  .logo .tagline { font-weight: 400; color: #555; font-size: 0.8rem; }
+  .logo .credit { font-weight: 400; color: #888; font-size: 0.72rem; }
+  .logo a { color: #888; text-decoration: underline; }
   .notify-btn {
     font-size: 0.8rem;
     padding: 6px 12px;
@@ -192,7 +193,10 @@
 <body>
 
 <header>
-  <div class="logo">SlimmerWoorden <span>door <a href="https://qhaneveld.nl" target="_blank" rel="noopener">Quint Haneveld</a> | Taalliefhebber</span></div>
+  <div class="logo">SlimmerWoorden
+    <span class="tagline">Een slim woord voor elke dag</span>
+    <span class="credit">door <a href="https://qhaneveld.nl" target="_blank" rel="noopener">Quint Haneveld</a> | Taalliefhebber</span>
+  </div>
   <button class="notify-btn" id="notifyBtn" onclick="requestNotify()">🔔 Meldingen</button>
 </header>
 
@@ -360,8 +364,10 @@ async function requestNotify() {
     const messaging = firebase.messaging();
 
     const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+    await navigator.serviceWorker.ready;
+
     const token = await messaging.getToken({
-      vapidKey: '99R06W9qJRTX5_EFO3emvKSxatseEdl6DbAEwsgzLRc',
+      vapidKey: 'BN47jcZxL-Gzruv5SmVCgk09XjIGOshNhQ5pwd-VUtlocSHajrdcMYtXrzHrLMv-BFgqBH3tGXWSg7reQ2L8_nw',
       serviceWorkerRegistration: registration
     });
 
