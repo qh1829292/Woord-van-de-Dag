@@ -1,5 +1,20 @@
+const { getStore } = require('@netlify/blobs');
+
 exports.handler = async (event) => {
   const today = new Date().toISOString().slice(0, 10);
+  const store = getStore('word-history');
+
+  let recentWords = [];
+  try {
+    const historyRaw = await store.get('recent');
+    if (historyRaw) recentWords = JSON.parse(historyRaw);
+  } catch (e) {
+    recentWords = [];
+  }
+
+  const exclusionText = recentWords.length > 0
+    ? `Gebruik GEEN van deze woorden, die zijn al recent gebruikt: ${recentWords.join(', ')}.`
+    : '';
 
   const prompt = `Genereer een Nederlands woord op B1 of C1 taalniveau, geschikt voor iemand die zijn woordenschat wil uitbreiden.
 Antwoord ALLEEN met dit JSON-object, geen uitleg, geen markdown:
@@ -18,7 +33,8 @@ Instructies:
 - definitie: helder, beknopt, 1-2 zinnen
 - voorbeeldzin: natuurlijk, modern, illustreert het woord goed
 - Kies een woord dat niet te alledaags is, maar ook niet archaisch
-- Varieer in woordsoort`;
+- Varieer in woordsoort
+- ${exclusionText}`;
 
   try {
     const resp = await fetch('https://api.anthropic.com/v1/messages', {
@@ -41,7 +57,7 @@ Instructies:
     }
 
     const text = data.content[0].text.trim();
-    const cleaned = text.replace(/json|/g, '').trim();
+    const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const json = JSON.parse(cleaned);
 
     const entry = {
@@ -53,6 +69,9 @@ Instructies:
       definition: json.definitie,
       example: json.voorbeeldzin
     };
+
+    const updatedHistory = [json.woord, ...recentWords].slice(0, 30);
+    await store.set('recent', JSON.stringify(updatedHistory));
 
     return {
       statusCode: 200,
