@@ -1,15 +1,17 @@
 const { getStore } = require('@netlify/blobs');
 
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
   const today = new Date().toISOString().slice(0, 10);
-  const store = getStore('word-history');
 
   let recentWords = [];
+  let store = null;
   try {
+    store = getStore({ name: 'word-history', consistency: 'strong' });
     const historyRaw = await store.get('recent');
     if (historyRaw) recentWords = JSON.parse(historyRaw);
   } catch (e) {
     recentWords = [];
+    store = null;
   }
 
   const exclusionText = recentWords.length > 0
@@ -71,7 +73,11 @@ Instructies:
     };
 
     const updatedHistory = [json.woord, ...recentWords].slice(0, 30);
-    await store.set('recent', JSON.stringify(updatedHistory));
+    if (store) {
+      try {
+        await store.set('recent', JSON.stringify(updatedHistory));
+      } catch (e) { /* niet kritiek, woord werkt ook zonder geheugen */ }
+    }
 
     return {
       statusCode: 200,
