@@ -10,21 +10,6 @@ firebase.initializeApp({
   appId: "1:837901820354:web:827f31e4cb4b172a91765b"
 });
 
-const messaging = firebase.messaging();
-
-// Handle background messages
-messaging.onBackgroundMessage((payload) => {
-  const title = payload.notification?.title || 'SlimmerWoorden.nl';
-  const options = {
-    body: payload.notification?.body || 'Open de app voor het woord van de dag',
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
-    tag: 'woord-notificatie'
-  };
-  self.registration.showNotification(title, options);
-});
-
-// Handle push events (fallback)
 self.addEventListener('push', (event) => {
   if (!event.data) return;
   
@@ -44,7 +29,6 @@ self.addEventListener('push', (event) => {
   }
 });
 
-// Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
