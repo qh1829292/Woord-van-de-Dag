@@ -1,6 +1,5 @@
 const { getStore } = require('@netlify/blobs');
 
-// Geeft een Firebase OAuth2 access token terug, met de service-account sleutel
 async function getAccessToken() {
   const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
@@ -53,7 +52,11 @@ async function getTodaysWord() {
 
 exports.handler = async (event) => {
   try {
-    const store = getStore({ name: 'push-tokens', consistency: 'strong' });
+    const store = getStore({
+      name: 'push-tokens',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_AUTH_TOKEN
+    });
     const { blobs } = await store.list();
 
     if (blobs.length === 0) {
