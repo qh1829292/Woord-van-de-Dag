@@ -1,7 +1,11 @@
 const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event) => {
-  const store = getStore('push-tokens');
+  const store = getStore({
+    name: 'push-tokens',
+    siteID: process.env.NETLIFY_SITE_ID,
+    token: process.env.NETLIFY_AUTH_TOKEN
+  });
 
   if (event.httpMethod === 'DELETE') {
     try {
