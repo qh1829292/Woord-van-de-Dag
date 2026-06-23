@@ -6,7 +6,11 @@ exports.handler = async (event, context) => {
   let recentWords = [];
   let store = null;
   try {
-    store = getStore({ name: 'word-history', consistency: 'strong' });
+    store = getStore({
+      name: 'word-history',
+      siteID: process.env.NETLIFY_SITE_ID,
+      token: process.env.NETLIFY_AUTH_TOKEN
+    });
     const historyRaw = await store.get('recent');
     if (historyRaw) recentWords = JSON.parse(historyRaw);
   } catch (e) {
@@ -76,7 +80,7 @@ Instructies:
     if (store) {
       try {
         await store.set('recent', JSON.stringify(updatedHistory));
-      } catch (e) { /* niet kritiek, woord werkt ook zonder geheugen */ }
+      } catch (e) { /* niet kritiek */ }
     }
 
     return {
