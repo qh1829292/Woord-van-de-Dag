@@ -47,13 +47,13 @@ async function getTodaysWord() {
   });
   const data = await resp.json();
   const text = data.content[0].text.trim();
-  const cleaned = text.replace(/json|/g, '').trim();
+  const cleaned = text.replace(/```json/g, '').replace(/```/g, '').trim();
   return JSON.parse(cleaned);
 }
 
 exports.handler = async (event) => {
   try {
-    const store = getStore('push-tokens');
+    const store = getStore({ name: 'push-tokens', consistency: 'strong' });
     const { blobs } = await store.list();
 
     if (blobs.length === 0) {
