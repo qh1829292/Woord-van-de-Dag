@@ -31,16 +31,5 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      for (let i = 0; i < clientList.length; i++) {
-        if (clientList[i].url === '/' && 'focus' in clientList[i]) {
-          return clientList[i].focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow('/');
-      }
-    })
-  );
+  event.waitUntil(clients.openWindow('https://slimmerwoorden.nl'));
 });
