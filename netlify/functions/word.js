@@ -2,9 +2,9 @@ const { getStore } = require('@netlify/blobs');
 
 exports.handler = async (event, context) => {
   const today = new Date().toISOString().slice(0, 10);
-
   let recentWords = [];
   let store = null;
+
   try {
     store = getStore({
       name: 'word-history',
@@ -32,7 +32,6 @@ Antwoord ALLEEN met dit JSON-object, geen uitleg, geen markdown:
   "definitie": "...",
   "voorbeeldzin": "..."
 }
-
 Instructies:
 - woordsoort: gebruik "zelfstandig naamwoord (de)" of "zelfstandig naamwoord (het)" of "werkwoord" of "bijvoeglijk naamwoord" of "bijwoord" of "voegwoord" etc.
 - fonetisch: gebruik IPA-notatie tussen vierkante haken, bijv. [oːvərleːvən]
@@ -57,9 +56,17 @@ Instructies:
       })
     });
 
+    if (!resp.ok) {
+      const data = await resp.json();
+      return { statusCode: 500, body: JSON.stringify({ error: `API error: ${resp.status}` }) };
+    }
+
     const data = await resp.json();
     if (data.error) {
       return { statusCode: 500, body: JSON.stringify({ error: data.error.message }) };
+    }
+    if (!data.content || !data.content[0]) {
+      return { statusCode: 500, body: JSON.stringify({ error: 'No content in API response' }) };
     }
 
     const text = data.content[0].text.trim();
