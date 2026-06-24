@@ -2,7 +2,7 @@ name: Daily Notification
 
 on:
   schedule:
-    - cron: '10 17 * * *'
+    - cron: '0 5 * * *'
   workflow_dispatch:
 
 jobs:
