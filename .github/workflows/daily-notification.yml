@@ -1,0 +1,14 @@
+name: Daily Notification
+
+on:
+  schedule:
+    - cron: '6 17 * * *'
+  workflow_dispatch:
+
+jobs:
+  send-notification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger send-daily-notification
+        run: |
+          curl -X POST https://slimmerwoorden.nl/.netlify/functions/send-daily-notification
