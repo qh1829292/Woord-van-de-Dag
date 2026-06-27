@@ -251,8 +251,11 @@ function formatDate() {
 }
 
 async function loadWord(force = false) {
+  const today = getDateStr();
   const cached = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
-  if (!force && cached.date === getDateStr() && cached.word) {
+  
+  // Stap 1: Check localStorage (snelst)
+  if (!force && cached.date === today && cached.word) {
     renderWord(cached);
     return;
   }
@@ -260,16 +263,23 @@ async function loadWord(force = false) {
   showLoading();
 
   try {
+    // Stap 2: Haal van server (dit is altijd vandaag's woord)
     const resp = await fetch('/.netlify/functions/word', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ force })
+      body: JSON.stringify({ force: false })
     });
 
     if (!resp.ok) throw new Error('Server gaf een foutmelding (' + resp.status + ')');
     const entry = await resp.json();
     if (entry.error) throw new Error(entry.error);
 
+    // Zorg dat dit vandaag's woord is
+    if (entry.date !== today) {
+      throw new Error('Server gaf woord van verkeerde dag');
+    }
+
+    // Sla op in localStorage voor volgende bezoek
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entry));
     renderWord(entry);
   } catch (e) {
@@ -336,7 +346,7 @@ async function requestNotify() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: savedToken })
         });
-      } catch (e) { /* stil falen, lokaal toch uitzetten */ }
+      } catch (e) { }
     }
     localStorage.removeItem('notify_enabled');
     localStorage.removeItem('notify_token');
